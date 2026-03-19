@@ -5112,6 +5112,7 @@ fn setup_channels() -> Result<ChannelsConfig> {
                     private_key: private_key.trim().to_string(),
                     relays: relays.clone(),
                     allowed_pubkeys,
+                    proxy_url: None
                 });
 
                 println!(

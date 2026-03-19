@@ -3677,7 +3677,7 @@ pub async fn doctor_channels(config: Config) -> Result<()> {
         channels.push(ConfiguredChannel {
             display_name: "Nostr",
             channel: Arc::new(
-                NostrChannel::new(&ns.private_key, ns.relays.clone(), &ns.allowed_pubkeys).await?,
+                NostrChannel::new(&ns.private_key, ns.relays.clone(), &ns.allowed_pubkeys, ns.proxy_url.clone()).await?,
             ),
         });
     }
@@ -3998,7 +3998,7 @@ pub async fn start_channels(config: Config) -> Result<()> {
     #[cfg(feature = "channel-nostr")]
     if let Some(ref ns) = config.channels_config.nostr {
         channels.push(Arc::new(
-            NostrChannel::new(&ns.private_key, ns.relays.clone(), &ns.allowed_pubkeys).await?,
+            NostrChannel::new(&ns.private_key, ns.relays.clone(), &ns.allowed_pubkeys, ns.proxy_url.clone()).await?,
         ));
     }
     if channels.is_empty() {

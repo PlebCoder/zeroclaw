@@ -5604,6 +5604,8 @@ pub struct NostrConfig {
     /// Allowed sender public keys (hex or npub). Empty = deny all, "*" = allow all
     #[serde(default)]
     pub allowed_pubkeys: Vec<String>,
+    #[serde(default)]
+    pub proxy_url: Option<String>,  // NEW: e.g., "socks5://localhost:1080"
 }
 
 #[cfg(feature = "channel-nostr")]
