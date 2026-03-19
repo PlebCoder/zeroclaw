@@ -1,8 +1,8 @@
 #[cfg(feature = "channel-matrix")]
 use crate::channels::MatrixChannel;
 use crate::channels::{
-    Channel, DiscordChannel, MattermostChannel, SendMessage, SignalChannel, SlackChannel,
-    TelegramChannel,
+    Channel, DiscordChannel, MattermostChannel, NostrChannel, SendMessage, SignalChannel,
+    SlackChannel, TelegramChannel,
 };
 use crate::config::Config;
 use crate::cron::{
@@ -432,8 +432,30 @@ pub(crate) async fn deliver_announcement(
                 anyhow::bail!("matrix delivery channel requires `channel-matrix` feature");
             }
         }
-        other => anyhow::bail!("unsupported delivery channel: {other}"),
-    }
+        "nostr" => {
+            #[cfg(feature = "channel-nostr")]
+            {
+                let ns = config
+                    .channels_config
+                    .nostr
+                    .as_ref()
+                    .ok_or_else(|| anyhow::anyhow!("nostr channel not configured"))?;
+                let channel = NostrChannel::new(
+                    &ns.private_key,
+                    ns.relays.clone(),
+                    &ns.allowed_pubkeys,
+                    ns.proxy_url.clone(),
+                )
+                .await?;
+                channel.send(&SendMessage::new(output, target)).await?;
+            }
+            #[cfg(not(feature = "channel-nostr"))]
+            {
+                anyhow::bail!("nostr delivery channel requires `channel-nostr` feature");
+            }
+        }
+       other => anyhow::bail!("unsupported delivery channel: {other}"),
+   }
 
     Ok(())
 }
