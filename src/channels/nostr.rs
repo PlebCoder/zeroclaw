@@ -2,9 +2,11 @@ use crate::channels::traits::{Channel, ChannelMessage, SendMessage};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use nostr_sdk::prelude::*;
+use nostr_sdk::client::Connection;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use std::net::SocketAddr;
 
 /// Protocol used by a sender, tracked so replies use the same protocol.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -65,12 +67,31 @@ impl NostrChannel {
         private_key: &str,
         relays: Vec<String>,
         allowed_pubkeys: &[String],
+        proxy_url: Option<String>,
     ) -> Result<Self> {
         let keys = Keys::parse(private_key).context("Invalid Nostr private key")?;
         let public_key = keys.public_key();
         let allowed = AllowList::parse(allowed_pubkeys)?;
 
-        let client = Client::builder().signer(keys).build();
+        let opts = if let Some(url) = proxy_url.as_ref() {
+            let addr: SocketAddr = url
+                .trim_start_matches("socks5://")
+                .trim_start_matches("http://")   // in case someone really puts this
+                .trim_start_matches("https://")
+                .parse()
+                .context("Invalid proxy address: {url}")?;
+
+            ClientOptions::new()
+                .connection(Connection::new().proxy(addr))
+        } else {
+            ClientOptions::new()
+        };
+
+        let client = Client::builder()
+            .signer(keys.clone())
+            .opts(opts)
+            .build();
+
         for relay in &relays {
             client
                 .add_relay(relay.as_str())
