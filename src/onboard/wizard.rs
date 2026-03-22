@@ -5086,7 +5086,7 @@ fn setup_channels() -> Result<ChannelsConfig> {
                     .filter(|s| !s.is_empty())
                     .collect();
 
-                print_bullet("Allowlist pubkeys that can message the bot (hex or npub).");
+                print_bullet("Allowlist pubkeys that can message the bot (hex or npub), optionally suffixed by ':nip-04' or ':nip-14' to specify the DM protocol.");
                 print_bullet("Use '*' to allow anyone (not recommended for production).");
 
                 let pubkeys_str: String = Input::new()

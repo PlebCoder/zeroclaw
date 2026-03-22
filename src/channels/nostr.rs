@@ -95,13 +95,21 @@ impl Channel for NostrChannel {
     }
 
     async fn send(&self, message: &SendMessage) -> Result<()> {
+        let (recipient_str, protocol_str) = message.recipient.split_once(':').unwrap_or((&message.recipient, ""));
+
         let recipient =
-            PublicKey::parse(&message.recipient).context("Invalid recipient Nostr public key")?;
+            PublicKey::parse(recipient_str).context("Invalid recipient Nostr public key")?;
 
         // Look up which protocol this recipient last used; default to NIP-17
         let protocol = {
-            let map = self.sender_protocols.read().await;
-            map.get(&recipient).copied().unwrap_or(NostrProtocol::Nip17)
+            match protocol_str {
+                "nip-17" => NostrProtocol::Nip17,
+                "nip-04" => NostrProtocol::Nip04,
+                _ => {
+                    let map = self.sender_protocols.read().await;
+                    map.get(&recipient).copied().unwrap_or(NostrProtocol::Nip17)
+                },
+            }
         };
 
         match protocol {
